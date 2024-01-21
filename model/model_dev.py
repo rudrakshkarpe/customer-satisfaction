@@ -5,8 +5,9 @@ import pandas as pd
 from sklearn.base import RegressorMixin
 from sklearn.ensemble import RandomForestRegressor
 from lightgbm import LGBMRegressor
-
-
+import xgboost as xgb
+    
+        
 class Hyperparameter_Optimization:
 
     """
@@ -176,4 +177,44 @@ class ModelTrainer:
                 logging.error("Error in training LightGBM model.")
                 logging.error(e)
                 return None
+    def xgboost_trainer(self, fine_tuning: bool = True) -> RegressorMixin:
+        """
+        It trains the xgboost model.
+
+        Args:
+            fine_tuning: If True, hyperparameter optimization is performed. If False, the default
+            parameters are used, Defaults to True (optional).
+        """
+
+        logging.info("Started training XGBoost model.")
+        try:
+            if fine_tuning:
+                hy_opt = Hyperparameter_Optimization(
+                    self.x_train, self.y_train, self.x_test, self.y_test
+                )
+                study = optuna.create_study(direction="maximize")
+                study.optimize(hy_opt.optimize_xgboost_regressor, n_trials=10)
+                trial = study.best_trial
+                n_estimators = trial.params["n_estimators"]
+                learning_rate = trial.params["learning_rate"]
+                max_depth = trial.params["max_depth"]
+                reg = xgb.XGBRegressor(
+                    n_estimators=n_estimators,
+                    learning_rate=learning_rate,
+                    max_depth=max_depth,
+                )
+                reg.fit(self.x_train, self.y_train)
+                return reg
+
+            else:
+                model = xgb.XGBRegressor(
+                    n_estimators=200, learning_rate=0.01, max_depth=20
+                )
+                model.fit(self.x_train, self.y_train)
+                return model
+        except Exception as e:
+            logging.error("Error in training XGBoost model.")
+            logging.error(e)
+            return None
+
 
