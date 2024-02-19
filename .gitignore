@@ -1,3 +1,11 @@
 .zen/
 _assets/
 __pycache__/
+
+.dockerignore
+.vscode/
+
+venv/
+env/
+*.env
+.conda
